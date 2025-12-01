@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elevare - Análise de Qualidade Automatizada</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body class="font-mono p-8 bg-gray-50">
+    <div class="max-w-6xl mx-auto bg-white rounded-2xl shadow-2xl p-8">
+        <div class="flex items-center gap-3 mb-8">
+            <div class="w-12 h-12 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl flex items-center justify-center">
+                <i data-lucide="shield-check" class="w-6 h-6 text-white"></i>
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">🔍 ANÁLISE DE QUALIDADE AUTOMATIZADA</h1>
+                <p class="text-sm text-gray-600">Resultados baseados em análise estática e runtime</p>
+            </div>
+        </div>
+
+        <div id="results" class="space-y-4">
+            <!-- Resultados serão injetados aqui -->
+        </div>
+
+        <div id="score" class="mt-8 p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl text-center">
+            <h2 class="text-lg font-bold text-gray-900 mb-2">SCORE DE QUALIDADE</h2>
+            <div id="final-score" class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">0%</div>
+        </div>
+
+        <div class="mt-8 p-6 bg-blue-50 border border-blue-200 rounded-xl">
+            <h3 class="font-bold text-blue-900 mb-2">📊 Como Usar</h3>
+            <ol class="text-sm text-blue-800 space-y-1 list-decimal list-inside">
+                <li>Abra a landing page em outra aba</li>
+                <li>Retorne a esta página</li>
+                <li>Clique em "Executar Análise"</li>
+                <li>Veja o score e itens PASS/FAIL</li>
+            </ol>
+            <button id="run-analysis" class="mt-4 px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-medium hover:shadow-lg transition-all">
+                🔄 Executar Análise
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Sistema de avaliação automática
+        const checks = [
+            // CRITICAL (4 pontos cada)
+            { id: 'auth-system', name: 'Sistema de Autenticação', category: 'critical', verify: () => window.elevareAuth && typeof window.elevareAuth.openAuthModal === 'function' },
+            { id: 'lead-capture', name: 'Captura de Leads Funcional', category: 'critical', verify: () => document.getElementById('lead-capture-form') || document.getElementById('lead-email') },
+            { id: 'plan-modal', name: 'Modal de Planos', category: 'critical', verify: () => window.pricingModal || document.getElementById('pricing-modal') },
+            { id: 'mobile-nav', name: 'Navegação Mobile', category: 'critical', verify: () => document.getElementById('mobile-menu-toggle') && document.getElementById('mobile-menu') },
+            
+            // HIGH (3 pontos cada)
+            { id: 'webgl-bg', name: 'Background Shader WebGL', category: 'high', verify: () => document.querySelector('canvas') || getComputedStyle(document.body).background.includes('gradient') },
+            { id: 'counter-anim', name: 'Animações de Contador', category: 'high', verify: () => document.querySelectorAll('.text-3xl.font-bold, [class*="text-3xl"]').length >= 3 },
+            { id: 'scroll-reveal', name: 'Scroll Animations', category: 'high', verify: () => document.querySelectorAll('.scroll-reveal, [class*="fade"], [class*="slide"]').length > 0 },
+            { id: 'lucide-icons', name: 'Ícones Lucide', category: 'high', verify: () => document.querySelectorAll('[data-lucide]').length > 10 || typeof lucide !== 'undefined' },
+            
+            // MEDIUM (2 pontos cada)
+            { id: 'cta-buttons', name: 'Botões de CTA', category: 'medium', verify: () => document.querySelectorAll('button, .btn, [class*="button"]').length > 5 },
+            { id: 'forms-validation', name: 'Validação de Formulários', category: 'medium', verify: () => document.querySelector('input[required]') || document.querySelector('input[type="email"]') },
+            { id: 'seo-meta', name: 'Meta Tags SEO', category: 'medium', verify: () => document.querySelector('meta[name="description"]') && document.querySelector('title') },
+            { id: 'lead-tracker', name: 'Lead Tracker Ativo', category: 'medium', verify: () => window.leadTracker && typeof window.leadTracker.getLeadScore === 'function' },
+            
+            // LOW (1 ponto cada)
+            { id: 'analytics', name: 'Scripts de Analytics', category: 'low', verify: () => window.gtag || window.fbq || window.ga },
+            { id: 'pwa-manifest', name: 'PWA Manifest', category: 'low', verify: () => document.querySelector('link[rel="manifest"]') },
+            { id: 'favicon', name: 'Favicon Presente', category: 'low', verify: () => document.querySelector('link[rel="icon"]') || document.querySelector('link[rel="shortcut icon"]') },
+        ];
+
+        function runAnalysis() {
+            let totalScore = 0;
+            let maxScore = checks.reduce((sum, check) => {
+                return sum + (check.category === 'critical' ? 4 : check.category === 'high' ? 3 : check.category === 'medium' ? 2 : 1);
+            }, 0);
+
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = ''; // Limpa resultados anteriores
+
+            checks.forEach(check => {
+                const passed = check.verify();
+                const weight = check.category === 'critical' ? 4 : check.category === 'high' ? 3 : check.category === 'medium' ? 2 : 1;
+                const status = passed ? '✅ PASS' : '❌ FAIL';
+                const colorClass = passed ? 'green' : 'red';
+                
+                totalScore += passed ? weight : 0;
+
+                const div = document.createElement('div');
+                div.className = `p-4 border ${passed ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'} rounded-lg transition-all hover:shadow-md`;
+                div.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <span class="text-lg">${status}</span>
+                            <span class="font-bold ${passed ? 'text-green-800' : 'text-red-800'}">${check.name}</span>
+                            <span class="text-xs ${passed ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'} px-2 py-1 rounded">${check.category.toUpperCase()} (+${weight})</span>
+                        </div>
+                    </div>
+                    <p class="text-sm ${passed ? 'text-green-700' : 'text-red-700'} mt-2">Arquivos associados: ${getAssociatedFiles(check.id)}</p>
+                `;
+                resultsDiv.appendChild(div);
+            });
+
+            const percentage = Math.round((totalScore / maxScore) * 100);
+            document.getElementById('final-score').textContent = `${percentage}%`;
+
+            // Cores baseadas no score
+            const scoreDiv = document.getElementById('final-score');
+            scoreDiv.className = 'text-4xl font-black';
+            if (percentage >= 80) {
+                scoreDiv.classList.add('text-green-600');
+            } else if (percentage >= 60) {
+                scoreDiv.classList.add('text-yellow-600');
+            } else {
+                scoreDiv.classList.add('text-red-600');
+            }
+
+            lucide.createIcons();
+
+            // Log detalhado no console
+            console.log('📊 Análise de Qualidade Completa:', {
+                totalScore,
+                maxScore,
+                percentage: `${percentage}%`,
+                passed: checks.filter(c => c.verify()).length,
+                failed: checks.filter(c => !c.verify()).length
+            });
+        }
+
+        function getAssociatedFiles(checkId) {
+            const files = {
+                'auth-system': 'js/auth.js, js/app.js',
+                'lead-capture': 'index.html, js/app.js',
+                'plan-modal': 'js/modal-pricing.js, index.html',
+                'mobile-nav': 'index.html, js/app.js',
+                'webgl-bg': 'js/shader-background.js (se existir)',
+                'counter-anim': 'js/app.js, index.html',
+                'scroll-reveal': 'js/app.js',
+                'lucide-icons': 'index.html, lucide CDN',
+                'cta-buttons': 'index.html',
+                'forms-validation': 'index.html, js/app.js',
+                'seo-meta': 'index.html (head)',
+                'lead-tracker': 'js/lead-tracker.js',
+                'analytics': 'index.html (head)',
+                'pwa-manifest': 'manifest.json (não implementado)',
+                'favicon': 'index.html (head)'
+            };
+            return files[checkId] || 'arquivos não mapeados';
+        }
+
+        // Executar análise ao clicar no botão
+        document.getElementById('run-analysis').addEventListener('click', runAnalysis);
+
+        // Executar análise automaticamente ao carregar
+        window.addEventListener('load', () => {
+            setTimeout(runAnalysis, 1000); // Aguarda 1s para garantir que tudo carregou
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+{
+  "source": {
+    "include": [
+      "backend/src",
+      "frontend-landing/js"
+    ],
+    "includePattern": ".+\\.(js|ts)$",
+    "excludePattern": "(node_modules|dist|coverage|__tests__|test)"
+  },
+  "opts": {
+    "destination": "./docs/api",
+    "recurse": true,
+    "readme": "./README.md",
+    "template": "node_modules/docdash",
+    "encoding": "utf8"
+  },
+  "plugins": [
+    "plugins/markdown"
+  ],
+  "templates": {
+    "cleverLinks": true,
+    "monospaceLinks": true,
+    "default": {
+      "outputSourceFiles": true,
+      "includeDate": true
+    }
+  },
+  "markdown": {
+    "hardwrap": false,
+    "idInHeadings": true
+  },
+  "tags": {
+    "allowUnknownTags": true,
+    "dictionaries": ["jsdoc", "closure"]
+  }
+}
