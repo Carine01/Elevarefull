@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run build and tests
+        run: |
+          echo "Running build and tests..."
+          # Add your build and test commands here
+
+      - name: Ensure runtime-logs dir and blocked files exist
+        run: |
+          mkdir -p "$RUNNER_TEMP/runtime-logs"
+          touch "$RUNNER_TEMP/runtime-logs/blocked.jsonl"
+          touch "$RUNNER_TEMP/runtime-logs/blocked.md"
+        shell: bash
+
+      - name: Upload runtime-logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: runtime-logs
+          path: ${{ runner.temp }}/runtime-logs
+          if-no-files-found: ignore
